@@ -1,37 +1,47 @@
 // hexagon.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import proj4 from 'proj4';
+import proj4, { TemplateCoordinates } from 'proj4';
 import { featureToH3Set } from 'geojson2h3';
 import { cellToBoundary } from 'h3-js';
 import { DATA_URL } from '../constants/url-data.constant';
+import { HexagonModel } from '../models/hexagon.model';
+import { DataResponseModel } from '../models/response-data.model';
+import { FeatureModel } from '../models/feature.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HexagonService {
-  private hexagonCache: { [key: number]: any[] } = {};
+  private hexagonCache: { [key: number]: HexagonModel[] } = {};
   private readonly DATA_URL = DATA_URL;
 
   constructor(private http: HttpClient) {}
 
-  loadData(): Promise<any[]> {
-    return this.http.get<any>(this.DATA_URL).toPromise()
-      .then(response => this.convertCoordinates(response.features))
+  loadData(): Promise<FeatureModel[]> {
+    return this.http.get<DataResponseModel>(this.DATA_URL).toPromise()
+      .then(response => {
+        if (response) {
+          return this.convertCoordinates(response.features);
+        } else {
+          console.error('No response received');
+          return [];
+        }
+      })
       .catch(error => {
         console.error('Error loading data:', error);
         return [];
       });
   }
 
-  private convertCoordinates(features: any[]): any[] {
+  private convertCoordinates(features: FeatureModel[]): FeatureModel[] {
     const EPSG3857 = 'EPSG:3857';
     const EPSG4326 = 'EPSG:4326';
 
     return features.map(feature => {
       const convertedCoordinates = feature.geometry.coordinates.map((polygon: any[]) =>
         polygon.map(ring =>
-          ring.map((point: any) => proj4(EPSG3857, EPSG4326, point))
+          ring.map((point: TemplateCoordinates) => proj4(EPSG3857, EPSG4326, point))
         )
       );
 

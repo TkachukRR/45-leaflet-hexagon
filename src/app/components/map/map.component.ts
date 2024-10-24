@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { HexagonService } from '../../services/hexagon.service';
 import { NgIf } from '@angular/common';
 import * as L from 'leaflet';
+import { FeatureModel } from '../../models/feature.model';
+import { HexagonModel } from '../../models/hexagon.model';
 
 @Component({
   selector: 'app-map',
@@ -13,7 +15,7 @@ import * as L from 'leaflet';
 })
 export class MapComponent implements OnInit {
   map!: L.Map;
-  private convertedData: any[] = [];
+  private convertedData: FeatureModel[] = [];
   private hexagonLayers: L.Layer[] = [];
   private resolution = 3;
   private hexagonOpacity = 0.5;
@@ -44,7 +46,7 @@ export class MapComponent implements OnInit {
 
   private loadData(): void {
     this.isLoading = true;
-    this.hexagonService.loadData().then(data => {
+    this.hexagonService.loadData().then((data: FeatureModel[]) => {
       this.convertedData = data;
       this.updateHexagons();
     }).finally(() => {
@@ -52,7 +54,7 @@ export class MapComponent implements OnInit {
     });
   }
 
-  private addHexagonsToMap(hexagons: any[]): void {
+  private addHexagonsToMap(hexagons: HexagonModel[]): void {
     this.hexagonLayers.forEach(layer => this.map.removeLayer(layer));
     this.hexagonLayers = [];
 
@@ -68,7 +70,7 @@ export class MapComponent implements OnInit {
     });
   }
 
-  private filterVisibleHexagons(hexagons: any[]): any[] {
+  private filterVisibleHexagons(hexagons: HexagonModel[]): HexagonModel[] {
     const bounds = this.map.getBounds();
     return hexagons.filter(hex => {
       return hex.coordinates.every((coord: L.LatLngExpression) => bounds.contains(coord as L.LatLngExpression));
