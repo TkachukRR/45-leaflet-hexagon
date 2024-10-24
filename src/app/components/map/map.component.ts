@@ -106,12 +106,9 @@ export class MapComponent implements OnInit {
     this.hexagonLayers.forEach(layer => this.map.removeLayer(layer));
     this.hexagonLayers = [];
 
-    const bounds = this.map.getBounds();
-    const fullyVisibleHexagons = hexagons.filter(hex => {
-      return hex.coordinates.every((coord: L.LatLngExpression) => bounds.contains(coord as L.LatLngExpression));
-    });
+    const visibleHexagons = this.filterVisibleHexagons(hexagons);
 
-    fullyVisibleHexagons.forEach(hex => {
+    visibleHexagons.forEach(hex => {
       const hexLayer = L.polygon(hex.coordinates, {
         color: hex.color,
         fillOpacity: this.hexagonOpacity,
@@ -121,13 +118,24 @@ export class MapComponent implements OnInit {
     });
   }
 
+  private filterVisibleHexagons(hexagons: any[]): any[] {
+    const bounds = this.map.getBounds();
+    return hexagons.filter(hex => {
+      return hex.coordinates.every((coord: L.LatLngExpression) => bounds.contains(coord as L.LatLngExpression));
+    });
+  }
+
   private adjustHexagonResolution(): void {
     const zoomLevel = this.map.getZoom();
     const newResolution = this.getResolutionForZoom(zoomLevel);
 
+    const visibleHexagons = this.filterVisibleHexagons(this.hexagonCache[this.resolution] || []);
+
     if (newResolution !== this.resolution) {
       this.resolution = newResolution;
       this.updateHexagons();
+    } else {
+      this.addHexagonsToMap(visibleHexagons);
     }
   }
 
@@ -144,7 +152,6 @@ export class MapComponent implements OnInit {
       return 6;
     }
   }
-
 
   private async updateHexagons(): Promise<void> {
     this.isLoading = true;
