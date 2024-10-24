@@ -3,6 +3,8 @@ import * as L from 'leaflet';
 import { HttpClient } from '@angular/common/http';
 import { DATA_URL } from '../../constants/url-data.constant';
 import proj4 from 'proj4';
+import { featureToH3Set } from 'geojson2h3';
+import { cellToBoundary } from 'h3-js';
 
 @Component({
   selector: 'app-map',
@@ -13,8 +15,11 @@ import proj4 from 'proj4';
 })
 export class MapComponent implements OnInit {
   map!: L.Map;
-  private convertedData = {};
+  private convertedData: any[] = [];
+  private hexagons: any[] = [];
   private readonly DATA_URL = DATA_URL;
+  private resolution = 4;
+  private hexagonOpacity = 0.5;
 
   constructor(private http: HttpClient) {}
 
@@ -24,16 +29,18 @@ export class MapComponent implements OnInit {
   }
 
   private initMap(): void {
-    this.map = L.map('map').setView([0, 0], 0);
+    this.map = L.map('map').setView([0, 0], 2);
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(this.map)
+    }).addTo(this.map);
   }
 
   private loadData(): void {
     this.http.get<any>(this.DATA_URL).subscribe((response) => {
       this.convertedData = this.convertCoordinates(response.features);
+      this.hexagons = this.convertPolygonsToHexagons(this.convertedData);
+      this.addHexagonsToMap(this.hexagons);
     }, (error) => {
       console.error('Error loading data:', error);
     });
@@ -57,6 +64,34 @@ export class MapComponent implements OnInit {
           coordinates: convertedCoordinates
         }
       };
+    });
+  }
+
+  private convertPolygonsToHexagons(features: any[]): any[] {
+    const hexagons: any[] = [];
+
+    features.forEach(feature => {
+      const h3Indexes = featureToH3Set(feature, this.resolution);
+      h3Indexes.forEach(h3Index => {
+        const boundary = cellToBoundary(h3Index, true);
+        const hexagonCoordinates = boundary.map(coord => [coord[1], coord[0]] as L.LatLngExpression);
+
+        hexagons.push({
+          coordinates: hexagonCoordinates,
+          color: '#' + feature.properties.COLOR_HEX
+        });
+      });
+    });
+
+    return hexagons;
+  }
+
+  private addHexagonsToMap(hexagons: any[]): void {
+    hexagons.forEach(hex => {
+      L.polygon(hex.coordinates, {
+        color: hex.color,
+        fillOpacity: this.hexagonOpacity,
+      }).addTo(this.map);
     });
   }
 }
