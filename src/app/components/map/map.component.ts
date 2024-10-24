@@ -19,7 +19,7 @@ export class MapComponent implements OnInit {
   private hexagons: any[] = [];
   private hexagonLayers: L.Layer[] = [];
   private readonly DATA_URL = DATA_URL;
-  private resolution = 2;
+  private resolution = 3;
   private hexagonOpacity = 0.5;
 
   constructor(private http: HttpClient) {}
@@ -30,7 +30,7 @@ export class MapComponent implements OnInit {
   }
 
   private initMap(): void {
-    this.map = L.map('map').setView([0, 0], 2);
+    this.map = L.map('map').setView([22.5, 41.0], 6);
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -39,13 +39,17 @@ export class MapComponent implements OnInit {
     this.map.on('zoomend', () => {
       this.adjustHexagonResolution();
     });
+
+    this.map.on('moveend', () => {
+      this.updateHexagons();
+    });
   }
 
   private loadData(): void {
     this.http.get<any>(this.DATA_URL).subscribe((response) => {
       this.convertedData = this.convertCoordinates(response.features);
       this.hexagons = this.convertPolygonsToHexagons(this.convertedData);
-      this.addHexagonsToMap(this.hexagons);
+      this.updateHexagons();
     }, (error) => {
       console.error('Error loading data:', error);
     });
@@ -95,7 +99,12 @@ export class MapComponent implements OnInit {
     this.hexagonLayers.forEach(layer => this.map.removeLayer(layer));
     this.hexagonLayers = [];
 
-    hexagons.forEach(hex => {
+    const bounds = this.map.getBounds();
+    const fullyVisibleHexagons = hexagons.filter(hex => {
+      return hex.coordinates.every((coord: L.LatLngExpression) => bounds.contains(coord as L.LatLngExpression));
+    });
+
+    fullyVisibleHexagons.forEach(hex => {
       const hexLayer = L.polygon(hex.coordinates, {
         color: hex.color,
         fillOpacity: this.hexagonOpacity,
