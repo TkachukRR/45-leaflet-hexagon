@@ -16,7 +16,7 @@ import { cellToBoundary } from 'h3-js';
 export class MapComponent implements OnInit {
   map!: L.Map;
   private convertedData: any[] = [];
-  private hexagons: any[] = [];
+  private hexagonCache: { [key: number]: any[] } = {};
   private hexagonLayers: L.Layer[] = [];
   private readonly DATA_URL = DATA_URL;
   private resolution = 3;
@@ -48,7 +48,6 @@ export class MapComponent implements OnInit {
   private loadData(): void {
     this.http.get<any>(this.DATA_URL).subscribe((response) => {
       this.convertedData = this.convertCoordinates(response.features);
-      this.hexagons = this.convertPolygonsToHexagons(this.convertedData);
       this.updateHexagons();
     }, (error) => {
       console.error('Error loading data:', error);
@@ -77,8 +76,11 @@ export class MapComponent implements OnInit {
   }
 
   private convertPolygonsToHexagons(features: any[]): any[] {
-    const hexagons: any[] = [];
+    if (this.hexagonCache[this.resolution]) {
+      return this.hexagonCache[this.resolution];
+    }
 
+    const hexagons: any[] = [];
     features.forEach(feature => {
       const h3Indexes = featureToH3Set(feature, this.resolution);
       h3Indexes.forEach(h3Index => {
@@ -92,6 +94,7 @@ export class MapComponent implements OnInit {
       });
     });
 
+    this.hexagonCache[this.resolution] = hexagons;
     return hexagons;
   }
 
@@ -116,7 +119,7 @@ export class MapComponent implements OnInit {
 
   private adjustHexagonResolution(): void {
     const zoomLevel = this.map.getZoom();
-    let newResolution = this.getResolutionForZoom(zoomLevel);
+    const newResolution = this.getResolutionForZoom(zoomLevel);
 
     if (newResolution !== this.resolution) {
       this.resolution = newResolution;
@@ -139,7 +142,7 @@ export class MapComponent implements OnInit {
   }
 
   private updateHexagons(): void {
-    this.hexagons = this.convertPolygonsToHexagons(this.convertedData);
-    this.addHexagonsToMap(this.hexagons);
+    const hexagons = this.convertPolygonsToHexagons(this.convertedData);
+    this.addHexagonsToMap(hexagons);
   }
 }
