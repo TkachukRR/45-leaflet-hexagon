@@ -17,8 +17,9 @@ export class MapComponent implements OnInit {
   map!: L.Map;
   private convertedData: any[] = [];
   private hexagons: any[] = [];
+  private hexagonLayers: L.Layer[] = [];
   private readonly DATA_URL = DATA_URL;
-  private resolution = 4;
+  private resolution = 2;
   private hexagonOpacity = 0.5;
 
   constructor(private http: HttpClient) {}
@@ -34,6 +35,10 @@ export class MapComponent implements OnInit {
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(this.map);
+
+    this.map.on('zoomend', () => {
+      this.adjustHexagonResolution();
+    });
   }
 
   private loadData(): void {
@@ -87,11 +92,45 @@ export class MapComponent implements OnInit {
   }
 
   private addHexagonsToMap(hexagons: any[]): void {
+    this.hexagonLayers.forEach(layer => this.map.removeLayer(layer));
+    this.hexagonLayers = [];
+
     hexagons.forEach(hex => {
-      L.polygon(hex.coordinates, {
+      const hexLayer = L.polygon(hex.coordinates, {
         color: hex.color,
         fillOpacity: this.hexagonOpacity,
       }).addTo(this.map);
+
+      this.hexagonLayers.push(hexLayer);
     });
+  }
+
+  private adjustHexagonResolution(): void {
+    const zoomLevel = this.map.getZoom();
+    let newResolution = this.getResolutionForZoom(zoomLevel);
+
+    if (newResolution !== this.resolution) {
+      this.resolution = newResolution;
+      this.updateHexagons();
+    }
+  }
+
+  private getResolutionForZoom(zoom: number): number {
+    if (zoom < 5) {
+      return 2;
+    } else if (zoom < 7) {
+      return 3;
+    } else if (zoom < 9) {
+      return 4;
+    } else if (zoom < 11) {
+      return 5;
+    } else {
+      return 6;
+    }
+  }
+
+  private updateHexagons(): void {
+    this.hexagons = this.convertPolygonsToHexagons(this.convertedData);
+    this.addHexagonsToMap(this.hexagons);
   }
 }
