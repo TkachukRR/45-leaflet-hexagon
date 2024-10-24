@@ -5,11 +5,12 @@ import { DATA_URL } from '../../constants/url-data.constant';
 import proj4 from 'proj4';
 import { featureToH3Set } from 'geojson2h3';
 import { cellToBoundary } from 'h3-js';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [],
+  imports: [NgIf],
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss']
 })
@@ -21,6 +22,7 @@ export class MapComponent implements OnInit {
   private readonly DATA_URL = DATA_URL;
   private resolution = 3;
   private hexagonOpacity = 0.5;
+  public isLoading = false;
 
   constructor(private http: HttpClient) {}
 
@@ -46,11 +48,13 @@ export class MapComponent implements OnInit {
   }
 
   private loadData(): void {
+    this.isLoading = true;
     this.http.get<any>(this.DATA_URL).subscribe((response) => {
       this.convertedData = this.convertCoordinates(response.features);
       this.updateHexagons();
     }, (error) => {
       console.error('Error loading data:', error);
+      this.isLoading = false;
     });
   }
 
@@ -75,15 +79,15 @@ export class MapComponent implements OnInit {
     });
   }
 
-  private convertPolygonsToHexagons(features: any[]): any[] {
+  private async convertPolygonsToHexagons(features: any[]): Promise<any[]> {
     if (this.hexagonCache[this.resolution]) {
       return this.hexagonCache[this.resolution];
     }
 
     const hexagons: any[] = [];
-    features.forEach(feature => {
+    for (const feature of features) {
       const h3Indexes = featureToH3Set(feature, this.resolution);
-      h3Indexes.forEach(h3Index => {
+      for (const h3Index of h3Indexes) {
         const boundary = cellToBoundary(h3Index, true);
         const hexagonCoordinates = boundary.map(coord => [coord[1], coord[0]] as L.LatLngExpression);
 
@@ -91,8 +95,8 @@ export class MapComponent implements OnInit {
           coordinates: hexagonCoordinates,
           color: '#' + feature.properties.COLOR_HEX
         });
-      });
-    });
+      }
+    }
 
     this.hexagonCache[this.resolution] = hexagons;
     return hexagons;
@@ -141,8 +145,19 @@ export class MapComponent implements OnInit {
     }
   }
 
-  private updateHexagons(): void {
-    const hexagons = this.convertPolygonsToHexagons(this.convertedData);
-    this.addHexagonsToMap(hexagons);
+
+  private async updateHexagons(): Promise<void> {
+    this.isLoading = true;
+
+    setTimeout(async () => {
+      try {
+        const hexagons = await this.convertPolygonsToHexagons(this.convertedData);
+        this.addHexagonsToMap(hexagons);
+      } catch (error) {
+        console.error('Error updating hexagons:', error);
+      } finally {
+        this.isLoading = false;
+      }
+    }, 0);
   }
 }
