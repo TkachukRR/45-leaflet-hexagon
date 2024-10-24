@@ -1,11 +1,8 @@
+// map.component.ts
 import { Component, OnInit } from '@angular/core';
-import * as L from 'leaflet';
-import { HttpClient } from '@angular/common/http';
-import { DATA_URL } from '../../constants/url-data.constant';
-import proj4 from 'proj4';
-import { featureToH3Set } from 'geojson2h3';
-import { cellToBoundary } from 'h3-js';
+import { HexagonService } from '../../services/hexagon.service';
 import { NgIf } from '@angular/common';
+import * as L from 'leaflet';
 
 @Component({
   selector: 'app-map',
@@ -17,14 +14,12 @@ import { NgIf } from '@angular/common';
 export class MapComponent implements OnInit {
   map!: L.Map;
   private convertedData: any[] = [];
-  private hexagonCache: { [key: number]: any[] } = {};
   private hexagonLayers: L.Layer[] = [];
-  private readonly DATA_URL = DATA_URL;
   private resolution = 3;
   private hexagonOpacity = 0.5;
   public isLoading = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private hexagonService: HexagonService) {}
 
   ngOnInit() {
     this.initMap();
@@ -49,57 +44,12 @@ export class MapComponent implements OnInit {
 
   private loadData(): void {
     this.isLoading = true;
-    this.http.get<any>(this.DATA_URL).subscribe((response) => {
-      this.convertedData = this.convertCoordinates(response.features);
+    this.hexagonService.loadData().then(data => {
+      this.convertedData = data;
       this.updateHexagons();
-    }, (error) => {
-      console.error('Error loading data:', error);
+    }).finally(() => {
       this.isLoading = false;
     });
-  }
-
-  private convertCoordinates(features: any[]): any[] {
-    const EPSG3857 = 'EPSG:3857';
-    const EPSG4326 = 'EPSG:4326';
-
-    return features.map(feature => {
-      const convertedCoordinates = feature.geometry.coordinates.map((polygon: any[]) =>
-        polygon.map(ring =>
-          ring.map((point: any) => proj4(EPSG3857, EPSG4326, point))
-        )
-      );
-
-      return {
-        ...feature,
-        geometry: {
-          ...feature.geometry,
-          coordinates: convertedCoordinates
-        }
-      };
-    });
-  }
-
-  private async convertPolygonsToHexagons(features: any[]): Promise<any[]> {
-    if (this.hexagonCache[this.resolution]) {
-      return this.hexagonCache[this.resolution];
-    }
-
-    const hexagons: any[] = [];
-    for (const feature of features) {
-      const h3Indexes = featureToH3Set(feature, this.resolution);
-      for (const h3Index of h3Indexes) {
-        const boundary = cellToBoundary(h3Index, true);
-        const hexagonCoordinates = boundary.map(coord => [coord[1], coord[0]] as L.LatLngExpression);
-
-        hexagons.push({
-          coordinates: hexagonCoordinates,
-          color: '#' + feature.properties.COLOR_HEX
-        });
-      }
-    }
-
-    this.hexagonCache[this.resolution] = hexagons;
-    return hexagons;
   }
 
   private addHexagonsToMap(hexagons: any[]): void {
@@ -129,13 +79,11 @@ export class MapComponent implements OnInit {
     const zoomLevel = this.map.getZoom();
     const newResolution = this.getResolutionForZoom(zoomLevel);
 
-    const visibleHexagons = this.filterVisibleHexagons(this.hexagonCache[this.resolution] || []);
-
     if (newResolution !== this.resolution) {
       this.resolution = newResolution;
       this.updateHexagons();
     } else {
-      this.addHexagonsToMap(visibleHexagons);
+      this.addHexagonsToMap(this.hexagonService['hexagonCache'][this.resolution] || []);
     }
   }
 
@@ -158,7 +106,7 @@ export class MapComponent implements OnInit {
 
     setTimeout(async () => {
       try {
-        const hexagons = await this.convertPolygonsToHexagons(this.convertedData);
+        const hexagons = await this.hexagonService.convertPolygonsToHexagons(this.convertedData, this.resolution);
         this.addHexagonsToMap(hexagons);
       } catch (error) {
         console.error('Error updating hexagons:', error);
