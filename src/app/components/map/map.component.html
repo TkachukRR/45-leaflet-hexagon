@@ -1,6 +1,9 @@
 <div class="map-container">
   <div id="map"></div>
-  <div *ngIf="isLoading" class="loading">
-    Loading...
-  </div>
+  <app-color-filter
+    *ngIf="!isLoading"
+    [colors]="colors"
+    (activeColorsChange)="onActiveColorsChange($event)"
+  />
+  <div *ngIf="isLoading" class="loading">Loading...</div>
 </div>

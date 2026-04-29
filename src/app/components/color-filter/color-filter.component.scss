@@ -1,0 +1,43 @@
+.color-filter {
+  position: absolute;
+  bottom: 10px;
+  right: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  margin: 10px;
+
+  &__title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #555;
+    margin: 0 0 6px;
+  }
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  &__item {
+    cursor: pointer;
+    transition: opacity 0.2s;
+
+    &--inactive {
+      opacity: 0.25;
+    }
+  }
+
+  &__swatch {
+    display: block;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+  }
+}

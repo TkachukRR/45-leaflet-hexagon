@@ -6,11 +6,12 @@ import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { FeatureModel } from '../../models/feature.model';
 import { HexagonModel } from '../../models/hexagon.model';
+import { ColorFilterComponent } from '../color-filter/color-filter.component';
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [NgIf],
+  imports: [NgIf, ColorFilterComponent],
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss']
 })
@@ -19,6 +20,8 @@ export class MapComponent implements OnInit, OnDestroy {
   private convertedData: FeatureModel[] = [];
   private hexagonLayer!: L.LayerGroup;
   private renderer!: L.Canvas;
+  colors: string[] = [];
+  private activeColors = new Set<string>();
   private resolution = 3;
   private hexagonOpacity = 0.5;
   private isZooming = false;
@@ -73,10 +76,17 @@ export class MapComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.hexagonService.loadData().then((data: FeatureModel[]) => {
       this.convertedData = data;
+      this.colors = [...new Set(data.map(f => '#' + f.properties.COLOR_HEX))];
+      this.activeColors = new Set(this.colors);
       this.updateHexagons();
     }).finally(() => {
       this.isLoading = false;
     });
+  }
+
+  onActiveColorsChange(activeColors: Set<string>): void {
+    this.activeColors = activeColors;
+    this.addHexagonsToMap(this.hexagonService.getCachedHexagons(this.resolution));
   }
 
   private addHexagonsToMap(hexagons: HexagonModel[]): void {
@@ -98,9 +108,10 @@ export class MapComponent implements OnInit, OnDestroy {
 
   private filterVisibleHexagons(hexagons: HexagonModel[]): HexagonModel[] {
     const bounds = this.map.getBounds();
-    return hexagons.filter(hex => {
-      return hex.coordinates.some((coord: L.LatLngExpression) => bounds.contains(coord as L.LatLngExpression));
-    });
+    return hexagons.filter(hex =>
+      this.activeColors.has(hex.color) &&
+      hex.coordinates.some(coord => bounds.contains(coord as L.LatLngExpression))
+    );
   }
 
   private adjustHexagonResolution(): void {

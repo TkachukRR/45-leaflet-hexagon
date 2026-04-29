@@ -1,0 +1,13 @@
+<div class="color-filter">
+  <p class="color-filter__title">Layers</p>
+  <div class="color-filter__list">
+    <div
+      *ngFor="let color of colors"
+      class="color-filter__item"
+      [class.color-filter__item--inactive]="!activeColors.has(color)"
+      (click)="toggle(color)"
+    >
+      <span class="color-filter__swatch" [style.background-color]="color"></span>
+    </div>
+  </div>
+</div>
