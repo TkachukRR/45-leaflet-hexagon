@@ -23,6 +23,20 @@ export class ColorFilterComponent implements OnChanges {
       ? this.activeColors.delete(color)
       : this.activeColors.add(color);
 
+    this.emit();
+  }
+
+  selectAll(): void {
+    this.activeColors = new Set(this.colors);
+    this.emit();
+  }
+
+  selectNone(): void {
+    this.activeColors.clear();
+    this.emit();
+  }
+
+  private emit(): void {
     this.activeColorsChange.emit(new Set(this.activeColors));
   }
 }

@@ -1,5 +1,11 @@
 <div class="color-filter">
-  <p class="color-filter__title">Layers</p>
+  <div class="color-filter__header">
+    <p class="color-filter__title">Layers</p>
+    <div class="color-filter__actions">
+      <button (click)="selectAll()">All</button>
+      <button (click)="selectNone()">None</button>
+    </div>
+  </div>
   <div class="color-filter__list">
     <div
       *ngFor="let color of colors"
