@@ -28,6 +28,8 @@ export class MapComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private readonly moveEnd$ = new Subject<void>();
   public isLoading = false;
+  public visibleCount = 0;
+  public totalCount = 0;
 
   constructor(
     private hexagonService: HexagonService,
@@ -92,7 +94,11 @@ export class MapComponent implements OnInit, OnDestroy {
   private addHexagonsToMap(hexagons: HexagonModel[]): void {
     this.hexagonLayer.clearLayers();
 
-    this.filterVisibleHexagons(hexagons).forEach(hex => {
+    const visible = this.filterVisibleHexagons(hexagons);
+    this.totalCount = hexagons.length;
+    this.visibleCount = visible.length;
+
+    visible.forEach(hex => {
       L.polygon(hex.coordinates, {
         color: hex.color,
         fillOpacity: this.hexagonOpacity,

@@ -5,5 +5,8 @@
     [colors]="colors"
     (activeColorsChange)="onActiveColorsChange($event)"
   />
+  <div *ngIf="!isLoading && totalCount" class="hex-counter">
+    {{ visibleCount }} / {{ totalCount }} hexagons
+  </div>
   <div *ngIf="isLoading" class="loading">Loading...</div>
 </div>
