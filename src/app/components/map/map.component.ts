@@ -84,7 +84,7 @@ export class MapComponent implements OnInit {
   private filterVisibleHexagons(hexagons: HexagonModel[]): HexagonModel[] {
     const bounds = this.map.getBounds();
     return hexagons.filter(hex => {
-      return hex.coordinates.every((coord: L.LatLngExpression) => bounds.contains(coord as L.LatLngExpression));
+      return hex.coordinates.some((coord: L.LatLngExpression) => bounds.contains(coord as L.LatLngExpression));
     });
   }
 
