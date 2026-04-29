@@ -1,6 +1,6 @@
-// hexagon.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import proj4, { TemplateCoordinates } from 'proj4';
 import { featureToH3Set } from 'geojson2h3';
 import { cellToBoundary } from 'h3-js';
@@ -18,20 +18,14 @@ export class HexagonService {
 
   constructor(private http: HttpClient) {}
 
-  loadData(): Promise<FeatureModel[]> {
-    return this.http.get<DataResponseModel>(this.DATA_URL).toPromise()
-      .then(response => {
-        if (response) {
-          return this.convertCoordinates(response.features);
-        } else {
-          console.error('No response received');
-          return [];
-        }
-      })
-      .catch(error => {
-        console.error('Error loading data:', error);
-        return [];
-      });
+  async loadData(): Promise<FeatureModel[]> {
+    try {
+      const response = await firstValueFrom(this.http.get<DataResponseModel>(this.DATA_URL));
+      return this.convertCoordinates(response.features);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      return [];
+    }
   }
 
   private convertCoordinates(features: FeatureModel[]): FeatureModel[] {
