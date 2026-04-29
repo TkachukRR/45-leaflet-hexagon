@@ -1,5 +1,4 @@
-// map.component.ts
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HexagonService } from '../../services/hexagon.service';
 import { NgIf } from '@angular/common';
 import * as L from 'leaflet';
@@ -21,7 +20,10 @@ export class MapComponent implements OnInit {
   private hexagonOpacity = 0.5;
   public isLoading = false;
 
-  constructor(private hexagonService: HexagonService) {}
+  constructor(
+    private hexagonService: HexagonService,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit() {
     this.initMap();
@@ -105,16 +107,15 @@ export class MapComponent implements OnInit {
 
   private async updateHexagons(): Promise<void> {
     this.isLoading = true;
+    this.cdr.detectChanges();
 
-    setTimeout(async () => {
-      try {
-        const hexagons = await this.hexagonService.convertPolygonsToHexagons(this.convertedData, this.resolution);
-        this.addHexagonsToMap(hexagons);
-      } catch (error) {
-        console.error('Error updating hexagons:', error);
-      } finally {
-        this.isLoading = false;
-      }
-    }, 0);
+    try {
+      const hexagons = await this.hexagonService.convertPolygonsToHexagons(this.convertedData, this.resolution);
+      this.addHexagonsToMap(hexagons);
+    } catch (error) {
+      console.error('Error updating hexagons:', error);
+    } finally {
+      this.isLoading = false;
+    }
   }
 }
