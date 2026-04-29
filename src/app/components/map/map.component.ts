@@ -87,7 +87,12 @@ export class MapComponent implements OnInit, OnDestroy {
         color: hex.color,
         fillOpacity: this.hexagonOpacity,
         renderer: this.renderer,
-      }).addTo(this.hexagonLayer);
+      })
+        .bindTooltip(
+          `<b>H3:</b> ${hex.h3Index}<br><b>Res:</b> ${this.resolution}<br><b>Color:</b> ${hex.color}`,
+          { sticky: true },
+        )
+        .addTo(this.hexagonLayer);
     });
   }
 

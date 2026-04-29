@@ -67,7 +67,8 @@ export class HexagonService {
 
         hexagons.push({
           coordinates: hexagonCoordinates,
-          color: '#' + feature.properties.COLOR_HEX
+          color: '#' + feature.properties.COLOR_HEX,
+          h3Index,
         });
       }
     }
