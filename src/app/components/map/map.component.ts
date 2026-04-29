@@ -2,6 +2,8 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { HexagonService } from '../../services/hexagon.service';
 import { NgIf } from '@angular/common';
 import * as L from 'leaflet';
+import { Subject } from 'rxjs';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 import { FeatureModel } from '../../models/feature.model';
 import { HexagonModel } from '../../models/hexagon.model';
 
@@ -15,10 +17,13 @@ import { HexagonModel } from '../../models/hexagon.model';
 export class MapComponent implements OnInit, OnDestroy {
   map!: L.Map;
   private convertedData: FeatureModel[] = [];
-  private hexagonLayers: L.Layer[] = [];
+  private hexagonLayer!: L.LayerGroup;
+  private renderer!: L.Canvas;
   private resolution = 3;
   private hexagonOpacity = 0.5;
   private isZooming = false;
+  private readonly destroy$ = new Subject<void>();
+  private readonly moveEnd$ = new Subject<void>();
   public isLoading = false;
 
   constructor(
@@ -32,6 +37,8 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.map?.remove();
   }
 
@@ -42,6 +49,12 @@ export class MapComponent implements OnInit, OnDestroy {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(this.map);
 
+    this.renderer = L.canvas();
+    this.hexagonLayer = L.layerGroup().addTo(this.map);
+
+    this.moveEnd$.pipe(debounceTime(150), takeUntil(this.destroy$))
+      .subscribe(() => this.updateHexagons());
+
     this.map.on('zoomstart', () => {
       this.isZooming = true;
     });
@@ -51,11 +64,8 @@ export class MapComponent implements OnInit, OnDestroy {
     });
 
     this.map.on('moveend', () => {
-      if (this.isZooming) {
-        this.isZooming = false;
-        return;
-      }
-      this.updateHexagons();
+      if (this.isZooming) { this.isZooming = false; return; }
+      this.moveEnd$.next();
     });
   }
 
@@ -70,18 +80,14 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   private addHexagonsToMap(hexagons: HexagonModel[]): void {
-    this.hexagonLayers.forEach(layer => this.map.removeLayer(layer));
-    this.hexagonLayers = [];
+    this.hexagonLayer.clearLayers();
 
-    const visibleHexagons = this.filterVisibleHexagons(hexagons);
-
-    visibleHexagons.forEach(hex => {
-      const hexLayer = L.polygon(hex.coordinates, {
+    this.filterVisibleHexagons(hexagons).forEach(hex => {
+      L.polygon(hex.coordinates, {
         color: hex.color,
         fillOpacity: this.hexagonOpacity,
-      }).addTo(this.map);
-
-      this.hexagonLayers.push(hexLayer);
+        renderer: this.renderer,
+      }).addTo(this.hexagonLayer);
     });
   }
 
