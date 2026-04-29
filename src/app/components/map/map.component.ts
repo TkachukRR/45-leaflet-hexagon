@@ -18,6 +18,7 @@ export class MapComponent implements OnInit {
   private hexagonLayers: L.Layer[] = [];
   private resolution = 3;
   private hexagonOpacity = 0.5;
+  private isZooming = false;
   public isLoading = false;
 
   constructor(
@@ -37,11 +38,19 @@ export class MapComponent implements OnInit {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(this.map);
 
+    this.map.on('zoomstart', () => {
+      this.isZooming = true;
+    });
+
     this.map.on('zoomend', () => {
       this.adjustHexagonResolution();
     });
 
     this.map.on('moveend', () => {
+      if (this.isZooming) {
+        this.isZooming = false;
+        return;
+      }
       this.updateHexagons();
     });
   }
