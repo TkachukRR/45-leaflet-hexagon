@@ -8,6 +8,9 @@ Angular 18 application that visualizes geographic GeoJSON data as an interactive
 - **Dynamic H3 resolution** — hexagon size adjusts automatically based on zoom level (H3 resolution 2–6)
 - **Hexagon coloring** — each hexagon inherits `COLOR_HEX` from the corresponding GeoJSON feature
 - **Viewport culling** — only hexagons within the visible map bounds are rendered
+- **Layer filter** — toggle individual regions on/off by color with All / None controls
+- **Hover tooltip** — shows region ID, H3 index, resolution and color on hover
+- **Hexagon counter** — live `visible / total` count updates on pan, zoom and filter change
 - **Performance** — Canvas renderer (`L.canvas`), `LayerGroup` for batch DOM updates, debounced pan events via RxJS
 
 ## Tech Stack
