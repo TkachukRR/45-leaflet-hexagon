@@ -1,45 +1,36 @@
-# Frontend
+# Geo Hexagon Map
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.9.
+Angular 18 application that visualizes geographic GeoJSON data as an interactive H3 hexagonal grid on a Leaflet map.
 
-## Project Description
+## Features
 
-This project implements a hexagon view for data provided in the data.json file. The file contains coordinates and color values to define how the hexagons should be colored on the map.
+- **Coordinate conversion** — source data in EPSG:3857 is converted to EPSG:4326 via [proj4js](https://proj4js.org)
+- **Dynamic H3 resolution** — hexagon size adjusts automatically based on zoom level (H3 resolution 2–6)
+- **Hexagon coloring** — each hexagon inherits `COLOR_HEX` from the corresponding GeoJSON feature
+- **Viewport culling** — only hexagons within the visible map bounds are rendered
+- **Performance** — Canvas renderer (`L.canvas`), `LayerGroup` for batch DOM updates, debounced pan events via RxJS
 
-### Key Features:
+## Tech Stack
 
-	•	Data Conversion: Coordinates in the data.json file are in EPSG:3857 system and are converted to the EPSG:4326 system using proj4js.
-	•	Hexagon Display: The application uses OpenStreetMap to display the map with hexagons. The hexagons adjust in size based on the zoom level (lower zoom = bigger hexagons).
-	•	Hexagon Coloring: The color of each hexagon is set based on the COLOR_HEX property from data.json.
-	•	Visibility: Hexagons are displayed only within the visible screen area of the map.
-	•	Libraries: The project uses proj4js for coordinate transformation, geojson2h3 to convert polygons to H3 hexagons, and h3-js to generate hexagonal boundaries.
+| Library | Purpose |
+|---|---|
+| [Angular 18](https://angular.dev) | Framework, standalone components |
+| [Leaflet](https://leafletjs.com) | Interactive map rendering |
+| [H3-js](https://h3geo.org) | Hexagonal hierarchical grid |
+| [geojson2h3](https://github.com/uber/geojson2h3) | GeoJSON polygon → H3 index conversion |
+| [proj4js](https://proj4js.org) | Coordinate system transformation (EPSG:3857 → EPSG:4326) |
 
-### Useful Links:
+## Getting Started
 
-	•	Proj4js
-	•	Geojson2h3
-	•	H3-js
+```bash
+npm install
+ng serve
+```
 
-## Development server
+Navigate to `http://localhost:4200/`
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Data
 
-## Code scaffolding
+GeoJSON `FeatureCollection` with `MultiPolygon` geometries in EPSG:3857 projection. Each feature includes a `COLOR_HEX` property used for hexagon fill color.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
-
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Source: [gis-point/angular-hexagon-test](https://github.com/gis-point/angular-hexagon-test)
