@@ -1,6 +1,22 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --font-family: 'Inter', system-ui, sans-serif;
+
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --panel-radius: 6px;
+  --panel-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  --panel-padding: 8px;
+
+  --text-primary: #333;
+  --text-secondary: #555;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
-  padding: 0;
+  font-family: var(--font-family);
 }

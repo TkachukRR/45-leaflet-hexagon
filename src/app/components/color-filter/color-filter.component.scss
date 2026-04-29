@@ -3,10 +3,10 @@
   bottom: 10px;
   right: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 6px;
-  padding: 8px;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  background: var(--panel-bg);
+  border-radius: var(--panel-radius);
+  padding: var(--panel-padding);
+  box-shadow: var(--panel-shadow);
   margin: 10px;
 
   &__header {
@@ -22,7 +22,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #555;
+    color: var(--text-secondary);
     margin: 0;
   }
 
@@ -37,7 +37,8 @@
       border-radius: 3px;
       background: #fff;
       cursor: pointer;
-      color: #555;
+      color: var(--text-secondary);
+      font-family: var(--font-family);
 
       &:hover {
         background: #f0f0f0;
