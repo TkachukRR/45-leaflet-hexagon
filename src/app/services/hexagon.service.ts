@@ -49,6 +49,10 @@ export class HexagonService {
     });
   }
 
+  getCachedHexagons(resolution: number): HexagonModel[] {
+    return this.hexagonCache[resolution] ?? [];
+  }
+
   async convertPolygonsToHexagons(features: any[], resolution: number): Promise<any[]> {
     if (this.hexagonCache[resolution]) {
       return this.hexagonCache[resolution];

@@ -87,7 +87,7 @@ export class MapComponent implements OnInit {
       this.resolution = newResolution;
       this.updateHexagons();
     } else {
-      this.addHexagonsToMap(this.hexagonService['hexagonCache'][this.resolution] || []);
+      this.addHexagonsToMap(this.hexagonService.getCachedHexagons(this.resolution));
     }
   }
 
