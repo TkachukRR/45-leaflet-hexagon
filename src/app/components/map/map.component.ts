@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { HexagonService } from '../../services/hexagon.service';
 import { NgIf } from '@angular/common';
 import * as L from 'leaflet';
@@ -12,7 +12,7 @@ import { HexagonModel } from '../../models/hexagon.model';
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss']
 })
-export class MapComponent implements OnInit {
+export class MapComponent implements OnInit, OnDestroy {
   map!: L.Map;
   private convertedData: FeatureModel[] = [];
   private hexagonLayers: L.Layer[] = [];
@@ -26,9 +26,13 @@ export class MapComponent implements OnInit {
     private cdr: ChangeDetectorRef,
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.initMap();
     this.loadData();
+  }
+
+  ngOnDestroy(): void {
+    this.map?.remove();
   }
 
   private initMap(): void {
