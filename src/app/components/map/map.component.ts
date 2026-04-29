@@ -99,7 +99,7 @@ export class MapComponent implements OnInit, OnDestroy {
         renderer: this.renderer,
       })
         .bindTooltip(
-          `<b>H3:</b> ${hex.h3Index}<br><b>Res:</b> ${this.resolution}<br><b>Color:</b> ${hex.color}`,
+          `<b>Region:</b> ${hex.regionId}<br><b>H3:</b> ${hex.h3Index}<br><b>Res:</b> ${this.resolution}<br><b>Color:</b> ${hex.color}`,
           { sticky: true },
         )
         .addTo(this.hexagonLayer);

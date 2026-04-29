@@ -69,6 +69,7 @@ export class HexagonService {
           coordinates: hexagonCoordinates,
           color: '#' + feature.properties.COLOR_HEX,
           h3Index,
+          regionId: feature.properties.ID,
         });
       }
     }
