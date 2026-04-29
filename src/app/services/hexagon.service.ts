@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import proj4, { TemplateCoordinates } from 'proj4';
+import proj4 from 'proj4';
 import { featureToH3Set } from 'geojson2h3';
 import { cellToBoundary } from 'h3-js';
 import { DATA_URL } from '../constants/url-data.constant';
@@ -29,24 +29,17 @@ export class HexagonService {
   }
 
   private convertCoordinates(features: FeatureModel[]): FeatureModel[] {
-    const EPSG3857 = 'EPSG:3857';
-    const EPSG4326 = 'EPSG:4326';
-
-    return features.map(feature => {
-      const convertedCoordinates = feature.geometry.coordinates.map((polygon: any[]) =>
-        polygon.map(ring =>
-          ring.map((point: TemplateCoordinates) => proj4(EPSG3857, EPSG4326, point))
-        )
-      );
-
-      return {
-        ...feature,
-        geometry: {
-          ...feature.geometry,
-          coordinates: convertedCoordinates
-        }
-      };
-    });
+    return features.map(feature => ({
+      ...feature,
+      geometry: {
+        ...feature.geometry,
+        coordinates: feature.geometry.coordinates.map(polygon =>
+          polygon.map(ring =>
+            ring.map(point => proj4('EPSG:3857', 'EPSG:4326', point))
+          )
+        ),
+      },
+    }));
   }
 
   getCachedHexagons(resolution: number): HexagonModel[] {
@@ -58,21 +51,14 @@ export class HexagonService {
       return this.hexagonCache[resolution];
     }
 
-    const hexagons: HexagonModel[] = [];
-    for (const feature of features) {
-      const h3Indexes = featureToH3Set(feature, resolution);
-      for (const h3Index of h3Indexes) {
-        const boundary = cellToBoundary(h3Index, true);
-        const hexagonCoordinates = boundary.map(coord => [coord[1], coord[0]] as [number, number]);
-
-        hexagons.push({
-          coordinates: hexagonCoordinates,
-          color: '#' + feature.properties.COLOR_HEX,
-          h3Index,
-          regionId: feature.properties.ID,
-        });
-      }
-    }
+    const hexagons = features.flatMap(feature =>
+      featureToH3Set(feature, resolution).map(h3Index => ({
+        coordinates: cellToBoundary(h3Index, true).map(([lat, lng]) => [lng, lat] as [number, number]),
+        color: '#' + feature.properties.COLOR_HEX,
+        h3Index,
+        regionId: feature.properties.ID,
+      }))
+    );
 
     this.hexagonCache[resolution] = hexagons;
     return hexagons;
