@@ -53,17 +53,17 @@ export class HexagonService {
     return this.hexagonCache[resolution] ?? [];
   }
 
-  async convertPolygonsToHexagons(features: any[], resolution: number): Promise<any[]> {
+  async convertPolygonsToHexagons(features: FeatureModel[], resolution: number): Promise<HexagonModel[]> {
     if (this.hexagonCache[resolution]) {
       return this.hexagonCache[resolution];
     }
 
-    const hexagons: any[] = [];
+    const hexagons: HexagonModel[] = [];
     for (const feature of features) {
       const h3Indexes = featureToH3Set(feature, resolution);
       for (const h3Index of h3Indexes) {
         const boundary = cellToBoundary(h3Index, true);
-        const hexagonCoordinates = boundary.map(coord => [coord[1], coord[0]]);
+        const hexagonCoordinates = boundary.map(coord => [coord[1], coord[0]] as [number, number]);
 
         hexagons.push({
           coordinates: hexagonCoordinates,
